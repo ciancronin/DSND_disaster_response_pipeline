@@ -6,7 +6,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 from flask import Flask
-from flask import render_template, request, jsonify
+from flask import render_template, request
 from plotly.graph_objs import Bar, Heatmap
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
@@ -42,11 +42,11 @@ def tokenize(text):
 
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///./data/DisasterResponse.db')
+df = pd.read_sql_table('Messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("./models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -105,14 +105,14 @@ def index():
         {
             'data': [
                 Heatmap(
-                    x=categories_top,
-                    y=categories_top,
-                    z=categories_sorted.corr().values
+                    x=categories_sorted,
+                    y=categories_sorted,
+                    z=categories_top.corr().values
                 )
             ],
 
             'layout': {
-                'title': 'Correlation between categories'
+                'title': 'Correlation Between Categories'
             }
         }
     ]
@@ -144,7 +144,7 @@ def go():
 
 
 def main():
-    app.run(host='0.0.0.0', port=3001, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
 
 
 if __name__ == '__main__':
