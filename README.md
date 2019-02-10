@@ -1,5 +1,17 @@
 # Disaster Response Pipeline Project
 
+### Files
+1. app
+    - Contains the run.py and HTML templates to run Flask Web App with final model results and graphs
+2. data
+    - Contains process_data.py to apply data pre-processing steps
+    - disaster_messages.csv is the CSV of raw messages
+    - disaster_categories.csv is the CSV of corresponding message categories
+    - DisasterResponse.db is the database that contains the Messages table
+3. models
+    - train_classifier.py to build and train the model classifier
+    - classifier.pkl is the pickle dump of the trained model
+
 ### Instructions:
 1. Run the following commands in the project's root directory to set up your database and model.
 
