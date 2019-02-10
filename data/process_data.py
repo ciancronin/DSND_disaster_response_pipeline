@@ -1,16 +1,77 @@
+# Import Statements
 import sys
+import numpy as np
+import pandas as pd
+from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    '''
+    Load and merge CSV data
+    
+    Input:
+        messages_filepath - Path of disaster_messages CSV file
+        categories_filepath - Path of disaster_categories CSV file
+    
+    Output:
+        mes_and_cat - DataFrame of merges messages and categories files (outer join)
+    '''
+    
+    messages = pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
+    
+    mes_and_cat = messages.merge(categories, how = 'outer', on = 'id')
+    
+    return mes_and_cat
 
 
 def clean_data(df):
-    pass
+    '''
+    Clean and return the DataFrame df
+    
+    Input:
+        df - DataFrame to apply cleaning to
+    
+    Output:
+        df_clean - Cleaned DataFrame
+    '''
+    
+    # Split the categories column further by ';'
+    categories_split = df['categories'].str.split(pat = ';', expand = True)
+    
+    # Take the first element to get the row_names from categories_split
+    row_names = categories_split.iloc[0]
+    
+    # Split out the row_names by taking the 
+    categories_names = row_names.apply(lamda x: x[:-2])
+    
+    df_clean = pd.concat([df, \
+        pd.DataFrame(columns = categories_names)], axis = 1)
 
+    # Encode category values to 0/1
+    for col in categories_names:
+        df_clean[col] = df_clean['categories'].apply(lambda x: 0 \
+            if x.find(col + '-1') == -1 else 1)
+
+    # Drop the original labels
+    df_clean.drop(inplace = True, labels = 'categories', axis = 1)
+
+    # Drop duplicate rows, keeping the first occurance
+    df_clean.drop_duplicates(inplace = True, keep = 'first')
+
+    return df_clean
 
 def save_data(df, database_filename):
-    pass  
+    '''
+    Save a DataFrame to an SQLLite Database
+
+    Input:
+        df - DataFrame to be saved
+        database_filename - Path to save SQLLite Database to
+    '''
+
+    engine = create_engine('sqllite:///' + database_filename)
+    df.to_sql('Messages', engine, index = False)
 
 
 def main():
