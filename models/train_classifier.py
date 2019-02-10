@@ -18,10 +18,10 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 def load_data(database_filepath):
     '''
-    Load data from an SQLLite Database
+    Load data from an SQLite Database
 
     Input:
-        database_filepath - Path of the SQLLite Database to load
+        database_filepath - Path of the SQLite Database to load
 
     Output:
         X - Series of messages
@@ -29,10 +29,10 @@ def load_data(database_filepath):
         Y_categories - Numpy array of category names
     '''
 
-    engine = create_engine('sqllite:///' + database_filepath)
+    engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql_table('Messages', engine)
     X = df['message']
-    Y = df.drop(labels=['id', 'message', 'original', 'genre'])
+    Y = df.drop(labels=['id', 'message', 'original', 'genre'], axis=1)
     Y_categories = Y.columns.values
 
     return X, Y, Y_categories
@@ -71,7 +71,7 @@ def build_model():
     Input:
         None
     Output:
-        cv - GridSearchCV object of optimal model parameters
+        pipeline - Pipeline of classification model
     '''
 
     # Pipeline dict
@@ -83,14 +83,15 @@ def build_model():
 
     # Parameters dict for GridSearchCV
     parameters = {
+        'vect__min_df': [1, 5],
         'tfidf__use_idf': [False, True],
-        'clf__n_estimators': [50, 100],
-        'clf__min_samples_split': [2, 4, 8]
+        'clf__n_estimators': [10, 100],
+        'clf__min_samples_split': [2, 4, 8, 10]
         }
 
     cv = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1)
 
-    return cv
+    return pipeline
 
 
 def evaluate_model(model, X_test, Y_test, category_names):

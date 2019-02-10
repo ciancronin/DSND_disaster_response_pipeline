@@ -63,16 +63,16 @@ def clean_data(df):
 
 def save_data(df, database_filename):
     '''
-    Save a DataFrame to an SQLLite Database
+    Save a DataFrame to an SQLite Database
 
     Input:
         df - DataFrame to be saved
-        database_filename - Path to save SQLLite Database to
+        database_filename - Path to save SQLite Database to
     Output:
         None
     '''
 
-    engine = create_engine('sqllite:///' + database_filename)
+    engine = create_engine('sqlite:///' + database_filename)
     df.to_sql('Messages', engine, index=False)
 
 

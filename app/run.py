@@ -7,23 +7,39 @@ from nltk.tokenize import word_tokenize
 
 from flask import Flask
 from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar
+from plotly.graph_objs import Bar, Heatmap
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
 
 app = Flask(__name__)
 
+
 def tokenize(text):
+    '''
+    Transform text into tokens, and clean them
+
+    Input:
+        text - line of text to tokenize
+    Output:
+        tokens_clean - List of clean tokens
+    '''
+
+    # Tokenize text
     tokens = word_tokenize(text)
+
+    # Initiate Lemmatizer
     lemmatizer = WordNetLemmatizer()
 
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+    # Iterate through each token and clean
+    tokens_clean = []
 
-    return clean_tokens
+    for token in tokens:
+        token_clean = lemmatizer.lemmatize(token).lower().strip()
+        tokens_clean.appen(token_clean)
+
+    return tokens_clean
+
 
 # load data
 engine = create_engine('sqlite:///../data/YourDatabaseName.db')
@@ -37,12 +53,19 @@ model = joblib.load("../models/your_model_name.pkl")
 @app.route('/')
 @app.route('/index')
 def index():
-    
+
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    category_counts_df = df.iloc[:, 4:].sum().sort_values(ascending=False)
+    category_names = category_counts_df.index
+    category_counts = category_counts_df.values
+
+    categories_sorted = df.iloc[:, 5:].sum().sort_values(ascending=False).\
+        index.values
+    categories_top = df.iloc[:, 5:][categories_sorted]
+
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -63,13 +86,41 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        {
+            'data': [
+                Bar(
+                    x=category_names,
+                    y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Sorted Count of Messsage Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+            }
+        },
+        {
+            'data': [
+                Heatmap(
+                    x=categories_top,
+                    y=categories_top,
+                    z=categories_sorted.corr().values
+                )
+            ],
+
+            'layout': {
+                'title': 'Correlation between categories'
+            }
         }
     ]
-    
+
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-    
+
     # render web page with plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
@@ -78,13 +129,13 @@ def index():
 @app.route('/go')
 def go():
     # save user input in query
-    query = request.args.get('query', '') 
+    query = request.args.get('query', '')
 
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
     classification_results = dict(zip(df.columns[4:], classification_labels))
 
-    # This will render the go.html Please see that file. 
+    # This will render the go.html Please see that file.
     return render_template(
         'go.html',
         query=query,
